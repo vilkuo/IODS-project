@@ -1,7 +1,13 @@
 
 # About the project
 
-*Write a short description about the course and add a link to your GitHub repository here. This is an R Markdown (.Rmd) file so you should use R Markdown syntax.*
+*I'm feeling exited to get started with the course assignments. I hope to learn new techniques to visualize and analyze the data I produce.*
+
+*The Exercise Set was a good introduction to R. I didn't feel like both the textbook and the exercise file were super necessary because, most of the time, for me it was enough to read the textbook. I mostly did not deepen my understanding on the subject by running the code myself since the code output was already written on the textbook.*
+
+*My favorite topics were the ones that were the most difficult also. I liked trying to understand the flow of the code in the data summarising chapter where the different functions worked together.*
+
+**Here is a link to my project GitHub page:** [https://github.com/vilkuo/IODS-project](https://github.com/vilkuo/IODS-project)
 
 ```{r}
 # This is a so-called "R chunk" where you can write R code.
@@ -9,5 +15,4 @@
 date()
 
 ```
-The text continues here.
 
