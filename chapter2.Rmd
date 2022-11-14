@@ -4,10 +4,6 @@
 
 *I learned different methods and ways to manipulate data in tables using R. I also managed to slip in ways to make my code shorter and clearer which I have learned while programming with other languages. This week's exercises also taught me how to create different kind of plots and how to customize them to my liking.*
 
-```{r}
-date()
-```
-
 
 ### Read in data from file
 
