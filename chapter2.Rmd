@@ -1,13 +1,207 @@
-# Insert chapter 2 title here
+# Week 2 - Regression and model validation
 
-*Describe the work you have done this week and summarize your learning.*
+*This week I started building habits while working with RStudio and GitHub. Working with R in RStudio starts to feel comfortable.*
 
-- Describe your work and results clearly. 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods.
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using.
+*I learned different methods and ways to manipulate data in tables using R. I also managed to slip in ways to make my code shorter and clearer which I have learned while programming with other languages. This week's exercises also taught me how to create different kind of plots and how to customize them to my liking.*
 
 ```{r}
 date()
 ```
 
-Here we go again...
+
+### Read in data from file
+
+Here the data is read from a previously created csv file to a data frame object 'lrn14'. The contents of the data is explained below.
+
+```{r}
+# Access different necessary libraries
+library(plyr)
+library(tidyverse)
+library(GGally)
+library(ggplot2)
+library(patchwork)
+
+# Read and store data from local file to 'lrn14' variable
+lrn14 <- read.csv("data/learning2014.csv")
+
+# Explore the data by printing the dimensions of it into console
+dim(lrn14)
+```
+
+Output fromt he dim() function shows that the data frane has 166 entries in 7 different columns.
+
+```{r}
+# Show the first 6 rows of the of the data in table format
+head(lrn14)
+```
+
+In the table you can see the first 6 rows of the data. The rows represents the the data collected from different students
+
+The data consist of 7 different columns:
+
+1. gender: Gender of the student (M for male and F for female)
+2. age: Age of the student
+3. attitude: Student's attitude towards statistics in Likert scale (1-5)
+4. deep: Average score of student's tendency towards deep learning in Likert scale
+5. stra: Average score of student's tendency towards strategic learning in Likert scale
+6. surf: Average score of student's tendency towards surface learning in Likert scale
+7. points: Total points from exam
+
+
+### Exploring the data
+
+To get an quick overview of each of the variables, summary() function is used to print different key values for them.
+
+```{r}
+# Print the overall summary of the different variables in 'lrn14'
+summary(lrn14)
+```
+
+In the summary() output you can see the structure of the data for each variable.
+
+A couple of thoughts from the summaries:
+
+* The **age** range is wide but the ages of the students are concentrated within 20 to 30 year olds as can be seen from the 1st and 3rd quartiles being well within the range of 20-30.
+
+* There seems to be wide distribution of **attitude** among the student. The mean and median values are close to the middle of the Likert scale so the distribution is even.
+
+* The average values of the **deep**, **stra** and **surf** are very different from each other which gives an expression of tendency towards certain type of learning among the students.
+
+
+#### Graphical overview of the data
+Density plots give good understanding about the distribution of each variable. The densities can be further separated by gender. Mean value can also be plotted for both genders into the plots.
+
+```{r}
+# Create separate data frames holding mean values for each variable separated by gender
+cdeep <- ddply(lrn14, "gender", summarise, deep.mean=mean(deep))
+cstra <- ddply(lrn14, "gender", summarise, stra.mean=mean(stra))
+csurf <- ddply(lrn14, "gender", summarise, surf.mean=mean(surf))
+cpoints <- ddply(lrn14, "gender", summarise, points.mean=mean(points))
+cattitude <- ddply(lrn14, "gender", summarise, attitude.mean=mean(attitude))
+
+# Print the mean values for each variable separated by gender
+cattitude
+cdeep
+cstra
+csurf
+cpoints
+
+# Create and save ggplot() objects into variables for printing the plots together
+attitude_distr <- lrn14 %>% 
+  ggplot(aes(x = attitude, colour=gender)) +
+  geom_density() +
+  geom_vline(data=cattitude, aes(xintercept=attitude.mean, colour=gender), 
+             linetype="dashed", size=1) +
+  expand_limits(x = c(1, 5)) +
+  theme(legend.position = "none")
+
+deep_distr <- lrn14 %>% 
+  ggplot(aes(x = deep, colour=gender)) +
+  geom_density() +
+  geom_vline(data=cdeep, aes(xintercept=deep.mean, colour=gender), 
+             linetype="dashed", size=1) +
+  expand_limits(x = c(1, 5)) +
+  theme(legend.position = "none")
+
+stra_distr <- lrn14 %>% 
+  ggplot(aes(x = stra, colour=gender)) +
+  geom_density() +
+  geom_vline(data=cstra, aes(xintercept=stra.mean, colour=gender), 
+             linetype="dashed", size=1) +
+  expand_limits(x = c(1, 5)) +
+  theme(legend.position = "none")
+
+surf_distr <- lrn14 %>% 
+  ggplot(aes(x = surf, colour=gender)) +
+  geom_density() +
+  geom_vline(data=csurf, aes(xintercept=surf.mean, colour=gender), 
+             linetype="dashed", size=1) +
+  expand_limits(x = c(1, 5)) +
+  theme(legend.position = "none")
+
+points_distr <- lrn14 %>% 
+  ggplot(aes(x = points, colour=gender)) +
+  geom_density() +
+  geom_vline(data=cpoints, aes(xintercept=points.mean, colour=gender), 
+             linetype="dashed", size=1)
+
+# Print all the plots together
+(attitude_distr + deep_distr) / (stra_distr + surf_distr) / (points_distr + plot_spacer())
+```
+
+Comparing the mean values, males both have better attitude towards statistics and higher exam points. Males seem to prefer deep learning more the females ever so slightly. Females prefer strategic and surface learning more than males.
+
+Distribution of the points and deep learning preferences are towards the upper values. The distribution of strategic learning preferences seem to be close to normal distribution.
+
+
+#### Scatter matrix
+Scatter matrix makes is easy to interpret the data in one plot. You can easily also see the correlation between different variables in the data frame.
+
+```{r}
+# Define groups from gender for plotting
+group <- NA
+group[lrn14$gender == "M"] <- 1
+group[lrn14$gender == "F"] <- 2
+
+# Print scatter matrix for 'lrn14' with aesthetic elements
+p <- ggpairs(lrn14, mapping = aes(col = gender, alpha = 0.3), lower = list(combo = wrap("facethist", bins = 20)))
+p
+```
+
+From the plot you can see that **attitude** has highest overall correlation with points. Second is **stra** and third is **surf**.
+
+
+### Fitting a linear regression model and analysing the results
+
+Three variables will be selected based on the highest correlation with points and chosen as explanatory variables in a regression model targeting points variable.
+
+```{r}
+# Create model object 'm'
+m1 <- lm(points ~ attitude + stra + surf, data = lrn14)
+
+# Print a summary of the model
+summary(m1)
+```
+
+In the coefficients table, the estimate values for each variable describe the increase in points when the variable in question increases by one. Estimates are followed by the standard errors of each coefficients and t-values and finally the p-values.
+
+From the summary you can see on the F-statistic on the bottom that p-value is very low meaning that at least one explanatory variable is significantly related to the points variable. Looking at the coefficients table, you can see from the last column of p-values that attitude has very low p-value meaning statistically significant relationship to the points variable. The stra and surf coefficients aren't significant shown by the lack of stars at the end of the table.
+
+```{r}
+# Print the measure of error rate of the model
+sigma(m1)/mean(lrn14$points)
+```
+
+From this value you can see that the error rate is 23% which can be considered to be high.
+
+
+#### Improving the model
+Removing statistically insignificant coefficients from the model will help improving the model
+
+```{r}
+# Create model object 'm' with only the attitude variable
+m2 <- lm(points ~ attitude, data = lrn14)
+
+# Print a summary of the model
+summary(m2)
+```
+
+From the coefficients table, you can see that increasing attitude with 1 point predicts increase of 3.5 in exam points. 
+
+The adjusted multiple R-squared value being closer to 0 than 1 indicate the the model explains only a small portion of the variance in points variable. Variability in exam succession measured in points have to do mostly with something else than attitude.
+
+
+#### Regression model diagnostic plots
+Producing the diagnostic plots Residuals vs Fitted values, Normal QQ-plot and Residuals vs Leverage for the model 'm2'.
+
+```{r}
+# Combine the diagnostic plots in one figure
+par(mfrow = c(2,2))
+plot(m2, which = c(1,2,5))
+```
+
+In the Residuals vs Fitted plot, the residuals are scattered decently equally around the horizontal line indicating a linear relationship between the variables.
+
+Based on the Normal Q-Q plot the model seems to be normally distributed due to the points aligning well into a line. The exceptions aren't that far of the line either.
+
+The Residuals vs Leverage plot doesn't highlight any influential outliers in the data since there arent any points ant the top or bottom right corners in the plot.
