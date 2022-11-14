@@ -1,5 +1,5 @@
 
-# About the project
+# Week 1 - About the project
 
 *I'm feeling exited to get started with the course assignments. I hope to learn new techniques to visualize and analyze the data I produce.*
 
