@@ -1,4 +1,6 @@
-# Ville Kuorikoski, 14.11.2022, This script modifies and exports a dataset into csv format.
+# Ville Kuorikoski
+# 14.11.2022
+# This script modifies and exports a dataset into csv format. Data source: http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-data.txt
 
 # Install package 'tidyverse'
 library(tidyverse)
