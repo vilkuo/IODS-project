@@ -1,0 +1,173 @@
+# Week 3 - Logistic regression
+
+*I learned a lot more about regression models due to learning my lesson from the last week's assignment and the feedback I got for my assignment. Working with linear regression models also helped a lot when learning about the logistic regression.*
+
+*Working with GitHub and RStudio seems to be fluent already so I feel like I can pay more attention to learning about the statistics itself. Also I feel like my programming background helps a lot with that also.*
+
+## Analysis
+
+```{r, message=FALSE}
+# Load the necessary libraries
+library(tidyr); library(dplyr); library(forcats); library(GGally); library(ggplot2); library(patchwork)
+```
+
+### Read in the data
+
+Read the data into a variable and explore the contents
+
+```{r}
+# Read the data from a local file and store it in 'alc'
+alc <- read.table("data/alc.csv",sep=",", header=TRUE)
+
+# Print a overview of the data
+glimpse(alc)
+```
+
+In the output above, there are 35 columns representing 370 different student's grades, social, school and demographic features. The data set describes the average values in two different subjects, Math and Portuguese, for student absences, class failures and the grades from the first and second periods and the final grade (G1, G2 and G3 respectively). 'Paid' column represents if the student has had extra paid classes in Math as an binary, yes or no value. Other columns are not related to the courses but present background information about the student instead. 'Alc_use' means the average alcohol consumption between weekdays and weekends on a Likert scale where 5 means very high consumption. 'High_use' column shows 'TRUE' if 'alc_use' is higher than 2 and 'FALSE' otherwise. 
+
+Other columns with either nominal or binary values are 'school'(student's school), 'sex', 'address'(urban or rural), 'famsize'(less or equal to 3 or greater than 3), 'Pstatus'(parents living together or apart), 'Mjob'(mother's job field), 'Fjob' (father's job field), 'reason'(reason to choose this school), 'guardian', 'schoolsup'(extra educational support from school), 'famsup'(extra educational support from family), 'activities'(extra-curricular activities), 'nursery'(attended nursery school), 'higher'(wants to take higher education), 'internet'(access to internet at home), 'romantic'(in a romantic relationship).
+
+Rest of the columns have numeric value on a scale from 1 to either 4 or 5.
+
+
+### Relationship between alcohol consumption and other features
+
+I'm interested to see if there is connection between alcohol consumption and the student's absences ('absences') because I think alcohol consumption will be higher with students that have more school absences. I also think higher alcohol consumption could be more prevalent in students with lower final grade of the courses ('G3'). Other values I'm interested in while exploring the relationship to alcohol consumption are the quality of family relationships ('famrel') and the amount of times going out with friends ('goout'). I expect the alchol consumption to be higher with students that have lower family relationships and go out more with friends.
+
+#### Exploring the distributions and relationships in the data
+
+##### Distributions of the data
+
+```{r}
+# Print the summary of the 4 previously selected variables in the data set
+summary(select(alc, high_use, absences, G3, famrel, goout))
+```
+
+From the numerical summary can be seen that almost a third of the students are categorized with high consumption of alcohol. Number of school absences vary from 0 to 45 but the values are concentrated around the mean value of 4.511 because the 1st and 3rd quartiles are close to the mean. Final grade score vary from 0 to 18 while 20 is the maximum possible grade. The mean final grade is around the middle of the possible points. Family relationships are very good (4) on average and large portion (>75%) of the values are at least 4. The amount of times going out with friends seem to be more evenly distributed than family relationships based on the quantiles being evenly distributed.
+
+```{r}
+# Save the plots as variables
+p1 <- alc %>% ggplot(aes(famrel, col=sex, fill=sex)) + geom_bar() +
+  theme(legend.position = "none")
+p2 <- alc %>% ggplot(aes(G3, col=sex, fill=sex)) + geom_bar() +
+  theme(legend.position = "none")
+p3 <- alc %>% ggplot(aes(goout, col=sex, fill=sex)) + geom_bar()
+p4 <- alc %>% ggplot(aes(high_use, col=sex, fill=sex)) + geom_bar() +
+  theme(legend.position = "none")
+p5 <- alc %>% ggplot(aes(absences, col=sex, fill=sex)) + geom_bar() +
+  theme(legend.position = "none")
+p6 <- alc %>% ggplot(aes(sex, col=sex, fill=sex)) + geom_bar()
+
+# Print the plots in a grid
+(p1 + p2 + p3) / (p4 + p5 + p6)
+```
+
+Based on the graphical distributions highlighting the values between genders, not big differences can be seen in them except in alcohol use. Males seem to have more members flagged with high use than females even though there are more females in the data than males. Other variables seem to be evenly distributed when comparing the distributions between each gender.
+
+##### Relationships of different variables to alcohol consumption
+
+```{r}
+# Initializes box plots for the 4 numeric variables compared to alcohol consumption
+g1 <- ggplot(alc, aes(x = high_use, y = G3, col = sex)) +
+  geom_boxplot() + 
+  ylab("G3 grade") + 
+  ggtitle("Student final grades by alcohol consumption and sex")
+
+g2 <- ggplot(alc, aes(x = high_use, y = famrel, col = sex)) +
+  geom_boxplot() + 
+  ylab("Family relation quality") + 
+  ggtitle("Student family relationship quality by alcohol consumption and sex")
+
+g3 <- ggplot(alc, aes(x = high_use, y = goout, col = sex)) +
+  geom_boxplot() + 
+  ylab("Going out") + 
+  ggtitle("Student's amount of going out with friends by alcohol consumption and sex")
+
+g4 <- ggplot(alc, aes(x = high_use, y = absences, col = sex)) +
+  geom_boxplot() + 
+  ylab("Absences") + 
+  ggtitle("Student absences by alcohol consumption and sex")
+
+g1
+g2
+g3
+g4
+```
+
+Based on the bar plots students using higher amounts of alcohol tend to have worse quality of family relationships and go out more with friends. There is no clear difference between the final grades of females that consume high compared to low amounts of alcohol. On the other hand, males that use high amounts of alcohol seem to have lower final grades. Also the number of absences seem to be higher with both genders in the high alcohol consumption groups although the difference is bigger in the male groups. These findings support the hypotheses I made about the relationships of 'absences', 'famrel' and 'goout' to alcohol consumption. The relationship between alcohol usage to final course grades support my hypothesis for males but contradicts for females.
+
+### Fitting a logistic regression model to the data
+#### Fit the model and explore the model summary
+
+```{r}
+# Fit a logistic regression model with glm() and save it as 'm'
+m <- glm(high_use ~ absences + G3 + famrel + goout, data = alc, family = "binomial")
+
+# Print the summary of the model
+summary(m)
+```
+
+The summary values for null deviance, residual deviance and AIC describe the goodness of the model but they are not that useful on their own and need to be compared to other models instead. The lower these values are the better the model is. 'G3' has a z-value of 0.26 which is not at all significant and doesn't explain the target variable. Z-values for 'absences' (0.00106) and 'famrel' (0.00702) are both significant at the 0.01 level meaning that they are related to the student's consumption level of alcohol. 'goout' is significant at the 0.001 which means that the amount of times going out with friends significantly relates to the consumption of alcohol.
+
+#### Coefficients as odds ratios
+
+```{r, message=FALSE}
+# Compute odds ratios (OR)
+OR <- coef(m) %>% exp
+
+# Compute confidence intervals (CI)
+CI <- confint(m) %>% exp
+
+# Print odds ratios and confidence intervals
+cbind(OR, CI)
+```
+
+From the odds ratios above it can be estimated that increasing the categorical amount of going out with friends ('goout') by 1 **increases** the likelihood to be a high user of alcohol by ~112%. Increasing the amount of being absent ('absences') from school by 1 **increases** the likelihood to be a high user of alcohol by ~7%. Increasing the categorical value of the quality of family relationship ('famrel') by 1 **decreases** the likelihood to be a high user of alcohol by ~31%. For final grades ('G3'), the results are **not statistically significant** because the 95% confidence interval includes the value 1.0. 
+
+I did not hypothesize the explanatory power of these variables but the existence of correlation itself instead. In addition to the graphical analysis that I did before, these results further support my hypothesis of absences, family relations and going out with friends being related to alcohol consumption. The final grades not explaining alcohol consumption contradicts my hypothesis.
+
+
+### Prediction based on the model
+#### Produce a comparison between predicted values and actual values
+For the new model, 'G3' will be left out because it did not have statistical relationship with alcohol consumption.
+
+```{r}
+# Fit a new model to the data without G3 this time
+m1 <- glm(high_use ~ absences + famrel + goout, data = alc, family = "binomial")
+
+# Use predict() to predict the probability of high_use
+probabilities <- predict(m1, type = "response")
+
+# Add the predicted probabilities to 'alc'
+alc <- mutate(alc, probability = probabilities)
+
+# Make prediction of high_use based on probability
+alc <- mutate(alc, prediction = probability > 0.5)
+
+# Tabulate the high_use against the predictions
+table(high_use = alc$high_use, prediction = alc$prediction)
+
+# Plot the high_use against the predictions
+alc %>% ggplot(aes(high_use, col=prediction, fill=prediction)) + geom_bar()
+```
+
+The bar plot especially highlights the performance of the prediction power of the model. Vast majority of the actual false values were predicted by the model indicated by the proportion of the red colour in the left bar. True values instead were not as accurately predicted as the false values since slightly over half of the actual true values were predicted to be false by the model.
+
+#### Calculate the proportion of incorrectly predicted values
+
+```{r}
+# The proportion of false predictions of the total predictions for model 'm1'
+# where 'abs(alc$high_use - alc$prediction)' returns 1 when prediction is 
+# wrong because alcohol usage equals 1 when True and 0 when False. 
+# Therefore true positives and false negatives cancel each other out.
+# sum() sums the amount of wrong predictions in the table
+# nrow() returns the total amount of observations which equals to the amount of predictions
+sum(abs(alc$high_use - alc$prediction)) / nrow(alc)
+
+# Print the same proportion of false predictions for randomly guessed values by sample() function
+# Set seed of 1 is used for the random number generator to always get the same value for this assignment
+set.seed(1)
+sum(abs(alc$high_use - sample(c(0,1), replace=TRUE, size=nrow(alc)))) / nrow(alc)
+```
+
+The value for the proportion of false predictions is not that high considering the lack of refinement for the model in this assignment. Comparing the value derived from 'm1' model to the value from using sample() function shows that the model predicts the outcome significantly better than random guessing.
