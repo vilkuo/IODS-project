@@ -36,10 +36,10 @@ The data set has 14 columns and 506 variables. The rows in the data represent di
 summary(Boston)
 
 # Draw boxplots for the data in 'Boston'
-boxplot(select(Boston, indus, rm, dis, rad, ptratio))
-boxplot(select(Boston, chas, nox))
-boxplot(select(Boston, crim, zn, age, lstat, medv))
-boxplot(select(Boston, tax, black))
+boxplot(dplyr::select(Boston, indus, rm, dis, rad, ptratio))
+boxplot(dplyr::select(Boston, chas, nox))
+boxplot(dplyr::select(Boston, crim, zn, age, lstat, medv))
+boxplot(dplyr::select(Boston, tax, black))
 # Calculate correlation matrix for 'Boston'
 M_Boston <- cor(Boston) %>% 
   round(digits = 2)
@@ -69,7 +69,7 @@ Compared to the summary of the original, non-scaled data, the scaled variables n
 crime <- cut(boston_scaled$crim, breaks = quantile(boston_scaled$crim), include.lowest = TRUE, labels = c("low", "med_low", "med_high", "high"))
 
 # Remove the old 'crim' variable from the data set
-boston_scaled <- select(boston_scaled, -crim)
+boston_scaled <- dplyr::select(boston_scaled, -crim)
 
 # Add the new 'crime' variable to the scaled data set
 boston_scaled <- data.frame(boston_scaled, crime)
@@ -136,7 +136,7 @@ Based on the arrows, accessibility to radial highways ('rad') explained most for
 correct_classes <- test$crime
 
 # Remove the crime variables fromt the test data set
-test <- select(test, -crime)
+test <- dplyr::select(test, -crime)
 
 # Predict the crime classes on test data
 lda.pred <- predict(lda.fit, newdata = test)
