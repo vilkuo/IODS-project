@@ -1,19 +1,194 @@
 # Week 3 - Logistic regression
 
-**
+*I'm starting to understand the power of statistics while looking at the results that the different models produce. Predicting future with the predict() function using a model seems like a neat feature to say the least. The exercises this week helped give perspective for the scope of what statistics can do. I started to see connections to my field of study and how I could make use of statistics in my own research.*
+
 
 ## Analysis
 
 ```{r, message=FALSE}
 # Load the necessary libraries
-
+library(MASS)
+library(corrplot)
+library(dplyr)
+library(ggplot2)
 ```
 
-### Read in the data
 
-Read the data into a variable and explore the contents
+### Read the data
+
+#### Read the data into a variable and explore the contents
 
 ```{r}
+# Load the Boston data from MASS package
+data("Boston")
 
+# Explore the Boston data set contents
+dim(Boston)
+str(Boston)
 ```
 
+The data set has 14 columns and 506 variables. The rows in the data represent different suburbs in Boston and the data in general describes different aspects about the housing values or things that affect it. The data includes variables such as crime rate, pupil-teacher ratios and nitrogen oxide concentrations by town.
+
+#### Show graphical overviews of the data
+
+```{r}
+# Print the summaries of the variables in 'Boston'
+summary(Boston)
+
+# Draw boxplots for the data in 'Boston'
+boxplot(select(Boston, indus, rm, dis, rad, ptratio))
+boxplot(select(Boston, chas, nox))
+boxplot(select(Boston, crim, zn, age, lstat, medv))
+boxplot(select(Boston, tax, black))
+# Calculate correlation matrix for 'Boston'
+M_Boston <- cor(Boston) %>% 
+  round(digits = 2)
+
+corrplot.mixed(M_Boston, order = 'AOE', tl.pos = "d", tl.cex = 0.6, number.cex = 0.7)
+```
+
+Looking at the distributions based on the summary and the boxplot, some of the variables seem to be very dispersed based on the amount of outliers like in 'crim' and 'zn'. 'black', 'crim' and 'zn' observations are concentrated around certain value but also have a lot of outliers in the data. The variables can be separated to 4 groups for the box plots because of the scales, that the observations are in, are different enough. Only some of the variables seem to have somewhat balanced distribution, like 'ptratio', 'indus', 'nox' and 'rm'. Variable 'chas' only has binary values of 0 and 1.
+
+In the correlation plot image you can easily see the variables that have significant positive or negative correlations like 'rad' and 'tax' (0.91), and 'dis' to 'age', 'nox' and 'indus' (-0.75, -0.77 and -0.71 respectively). Overall, many of the variables have high correlation to each other.
+
+
+### Standardize the data
+
+```{r}
+# Scale the data in 'Boston' using scale() function
+boston_scaled = as.data.frame(scale(Boston))
+
+# Print the summary of the scaled data
+summary(boston_scaled)
+```
+
+Compared to the summary of the original, non-scaled data, the scaled variables now have also negative values. However, the values are now much more comparable to each other because they are scaled to similar magnitude and the mean in all the variables is 0 so the values are centered at 0.
+
+```{r}
+# Create a categorical variable of the crime rate
+crime <- cut(boston_scaled$crim, breaks = quantile(boston_scaled$crim), include.lowest = TRUE, labels = c("low", "med_low", "med_high", "high"))
+
+# Remove the old 'crim' variable from the data set
+boston_scaled <- select(boston_scaled, -crim)
+
+# Add the new 'crime' variable to the scaled data set
+boston_scaled <- data.frame(boston_scaled, crime)
+```
+
+### Linear Discriminant Analysis
+
+#### Create training and test sets
+
+```{r}
+# Set number of rows in the data set as 'n'
+n <- nrow(boston_scaled)
+
+# Set seed for the randomness
+set.seed(1)
+
+# Select randomly 80% of the data set
+ind <- sample(n,  size = n * 0.8)
+
+# Create the train and test sets
+train <- boston_scaled[ind,]
+test <- boston_scaled[-ind,]
+```
+
+#### Fit LDA on the training set
+
+```{r}
+# Fit the LDA
+lda.fit <- lda(crime ~ ., data = train)
+
+# Print the LDA object
+lda.fit
+```
+
+The proportion of trace tells that the first discriminant function (LD1) achieves 95.83% of the separation, LD2 3.2% and LD3 0.97%. The coefficients are more easily explained on the biplot of the LDA with arrows for the variables.
+
+#### Print LDA plot
+
+```{r}
+# LDA biplot arrow function
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# Changes 'classes' as numeric for plotting
+classes <- as.numeric(train$crime)
+
+# Plot LDA results
+plot(lda.fit, dimen = 2, pch = classes, col = classes)
+lda.arrows(lda.fit, myscale = 2)
+```
+
+Based on the arrows, accessibility to radial highways ('rad') explained most for high crime rates. Residental land zoned for lots overs 25k sq.ft. ('zn') explained most for the low crime rates and nitrogen oxide concentrations ('nox') explained most for the medium high crime rates. Based on the plot and the coeffiecients, variable 'black' seem to explain slightly more for the medium low crime rates. Overall, based on the plot, there seems to be very clear separation on the high crime rates while the medium low crime rate group overlap quite significantly with the low and medium high crime rate groups.
+
+### Prediction using LDA
+
+```{r}
+# Save the correct classes from the test data set
+correct_classes <- test$crime
+
+# Remove the crime variables fromt the test data set
+test <- select(test, -crime)
+
+# Predict the crime classes on test data
+lda.pred <- predict(lda.fit, newdata = test)
+
+# Print summary of the correct classes
+summary(correct_classes)
+
+# Cross tabulate the results
+table(correct = correct_classes, predicted = lda.pred$class)
+```
+
+In the output above, you can see that out of the 26 actual low values, the model predicted to be 13 low and 13 med_low. Out of the 25 med_low values the model predicted 4 to be low, 20 med_low and 1 med_high. Of the 27 med_high values, the model predicted 1 low, 8 med_low, 16 med_high and 2 high. The model predicted 23 of the 24 high values correctly and 1 value incorrectly as med_high. The accuracy order is: high > med_low > med_high > low, so highest crime rates are predicted more accurately while the lowest rates are inaccurate to predict with this model.
+
+### Clustering
+
+```{r}
+# Reload and scale the 'Boston' data set
+boston_scaled2 <- as.data.frame(scale(Boston))
+
+# Calculate the Euclidean distances between the observations
+dist_eu <- dist(Boston)
+summary(dist_eu)
+
+# Calculate and plot k-means clustering with test centers of 4
+km <- kmeans(Boston, centers = 4)
+pairs(Boston[1:5], col = km$cluster)
+pairs(Boston[6:10], col = km$cluster)
+pairs(Boston[11:14], col = km$cluster)
+```
+
+Certain variables produce distinct clusters such as 'tax' but most are still overlapping.
+
+```{r}
+# Set maximum cluster value to 5
+k_max <- 5
+
+# Calculate Total Within Sum of Squares
+twss <- sapply(1:k_max, function(k){kmeans(Boston, k)$tot.withinss})
+
+# Plot the results
+qplot(x = 1:k_max, y = twss, geom = 'line')
+```
+
+The total within sum of squares crashes significantly already at 2 clusters and decreases with further clusters used. Therefore 2 clusters are used to get any useful results from clustering.
+
+```{r}
+# Calculate k-means clustering with 2 centers
+km <- kmeans(Boston, centers = 2)
+pairs(Boston[1:5], col = km$cluster)
+pairs(Boston[6:10], col = km$cluster)
+pairs(Boston[11:14], col = km$cluster)
+pairs(Boston[c(1,9,10,13)], col = km$cluster)
+```
+
+Compared to the earlier plot with 4 clusters, 2 clusters seem to produce more pronounced distinct groups in the data. In the final plot the 3 variables with highest correlations to crime in the earlier correlation plot were selected. In this plot for example, you can see the that the high crime rates are almost exclusively located in the suburbs with 20+ index of accessibility to radial highways and close to 700 full-value property-tax rate per $10,000. Looking at the plot for crime rates and lower status percentages the clustering separates two clusters of suburbs of which the other has only low rates of crime but the other has differing rates of crime. Both groups seem to have all kinds of lower status proportions, so based on the plot there is no clear correlation between the crime rates and the lower status proportion.
