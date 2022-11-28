@@ -1,4 +1,4 @@
-# Week 3 - Logistic regression
+# Week 4 - Clustering and classification
 
 *I'm starting to understand the power of statistics while looking at the results that the different models produce. Predicting future with the predict() function using a model seems like a neat feature to say the least. The exercises this week helped give perspective for the scope of what statistics can do. I started to see connections to my field of study and how I could make use of statistics in my own research.*
 
