@@ -62,6 +62,8 @@ gii <- gii %>%
 # Combine the two data sets to a new data set called 'human'
 human <- inner_join(hd, gii, by = "Country")
 
+
+
 # Week 5------------------------------------------------------------------------
 # Check that the combined data set is correct
 dim(human) # The data set contains 195 observations and 19 variables
@@ -95,9 +97,11 @@ human_ <- select(human_, -Country)
 dim(human_) # The data set contains 155 observations and 8 variables as it should
 head(human_) # The rows are named with the Country names
 
+
+
 # Save the results and test the saved file--------------------------------------
 # Save the analysis data set to the current working directory, 'data'
-write_csv(human, "human.csv")
+write.csv(human_, "human.csv") # write.csv is used instead of write_csv so that the row names will be saved
 
 # Test the saved csv file by reading the file into 'df' and then printing
 # the structure and the first parts of the data frame
