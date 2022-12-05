@@ -1,6 +1,6 @@
 # Week 5 - Dimensionality reduction techniques
 
-**
+*I've been using PCA before this course also but this exercise helped to learn more things about how PCA works and what other alternatives there are to PCA and how they compare to it. The example data sets and the interpretation tasks force one to understand the methods at least in some level, which I appreciate.*
 
 
 ## Analysis
@@ -8,7 +8,10 @@
 ```{r, message=FALSE}
 # Load the necessary libraries
 library(dplyr)
+library(tidyr)
 library(corrplot)
+library(FactoMineR)
+library(ggplot2)
 ```
 
 
@@ -29,7 +32,122 @@ summary(human)
 The values of the variables are either numeric or integers. Each row represents the values of a certain country related to human development. The average values for 'Edu_FM' and 'Labo_FM' are under 1.0 meaning that on average, females are less represented in labor force and with secondary education. The maternal mortality rates are vastly different in certain countries illustrated by the over 1000-fold difference between the minimum and the maximum value. Males are much more present as representatives in parliament on average. The maximum percentage of females in parliament is only slightly over 50% while the minimum is 0%.
 
 ```{r}
-# 
-cor <- cor
+# Plot the correlations in the data
+cor(human) %>% 
+  corrplot.mixed(order = 'AOE', tl.cex = 0.7)
 
 ```
+
+Maternal mortality ratio seems to be heavily negatively correlated with life expectancy at birth and expected years of education, while maternal mortality ratio is positively correlated with adolescent birth rate. Other variables seem to have strong correlation to each other too besides female participation rate in labour force and percentage of females in parliament which don't seem to correlate to the other variables that much.
+
+### Principal Component Analysis
+
+#### PCA on the raw data
+
+```{r}
+# Perform the PCA
+pca_human_raw <- prcomp(human)
+
+# Summary of the PCA
+summary(pca_human_raw)
+
+# Plot the results
+biplot(pca_human_raw, choices = 1:2, cex = c(0.7, 0.7), col = c("grey40", "deeppink2"))
+```
+
+On non-standardized data, the PCA doesn't seem to capture the variance at all shown by the proportion of variance being mostly allocated to PC1. In the plot, most of the arrows representing the variables were skipped due to having indeterminate angle and the arrows in the plot don't make much sense either.
+
+#### Standardized data
+
+```{r}
+# Standardize the data
+human_std <- scale(human)
+
+# Print summary of the data
+summary(human_std) # Scales the data so that all variables are centered at 0
+
+# Perform PCA and print the summary
+pca_human <- prcomp(human_std)
+summary(pca_human)
+
+# Plot the results
+biplot(pca_human, choices = 1:2, cex = c(0.7, 0.7), col = c("grey40", "deeppink2"))
+```
+
+These results look immediately better than the ones from raw data. The results differ a lot from each other since the variables are not comparable since they are on completely different scales. Therefore the data needs to be standardized. 
+The summary shows how PC1 explains slightly over half of the total variance in the data and PC2 explains one-sixth of it. Together PCs 1 and 2 explain almost 70% of the variance. Both PC1 and PC2 are plotted in the biplot and the arrows represent the original values. PC1 seems to be positively correlated with maternal mortality rate and the adolescent birth rates. PC1 is negatively correlated with expected years of education, GNI per capita, ratio of females to males with secondary education and life expectancy at birth. PC2 is correlated positively with rate of females to males in participation in labour force and percentage of female representatives in parliament. All the previously mentioned groups that correlate to the PCs either positivley or negatively are also correlated with each other within the groups. Not one variable goes strictly vertical or horizontal so there is slight correlation between the variables and the other PC too. From the plot, countries at the extremes can be easily identified and connected to being explained by certain values based on the arrows. 
+
+```{r}
+# Example values in Mozambique
+summary(human)
+human["Mozambique", ]
+
+```
+
+Mozambique is located on the top right in the PCA biplot. The variables that correlated positively with the PCs should therefore be on the higher end with Mozambique. Looking at the Mozambique values and comparing them to the summary of the variables, one can see that Mozambique does indeed have significantly higher values than 75% of the other countries in maternal mortality rate, adolescent birth rate, percentages of females in parliament and rate of females to males in labour participation. Also, the variables that negativaley correlate with PC1 are low in Mozambique: expected years in education, GNI per capita, life expectancy and rate of females to males with secondary education.
+
+### Multiple Correspondence Analysis on tea data
+
+#### Load and explore the data
+
+```{r}
+# Load the data
+tea <- read.csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/tea.csv", stringsAsFactors = TRUE)
+
+# Explore the data
+str(tea)
+View(tea)
+
+# Drop 'age' out since there is already factorized age groups in the data
+tea <- select(tea, -age)
+
+# Plot all the data in 'tea' in groups of 6.
+pivot_longer(tea[1:6], cols = everything()) %>% 
+  ggplot(aes(value)) + facet_wrap("name", scales = "free") +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+pivot_longer(tea[7:12], cols = everything()) %>% 
+  ggplot(aes(value)) + facet_wrap("name", scales = "free") +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+pivot_longer(tea[13:18], cols = everything()) %>% 
+  ggplot(aes(value)) + facet_wrap("name", scales = "free") +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+pivot_longer(tea[19:24], cols = everything()) %>% 
+  ggplot(aes(value)) + facet_wrap("name", scales = "free") +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+pivot_longer(tea[25:30], cols = everything()) %>% 
+  ggplot(aes(value)) + facet_wrap("name", scales = "free") +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+pivot_longer(tea[31:35], cols = everything()) %>% 
+  ggplot(aes(value)) + facet_wrap("name", scales = "free") +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+```
+
+The plots show how the variables are distributed between the different options. There's not much to be conclusively said about the variables. Some are distributed evenly while others are not.
+
+#### MCA
+
+```{r}
+# Perform MCA
+mca1 <- MCA(tea, graph = FALSE)
+
+# Visualize the results
+plot(mca1, invisible=c("ind"), graph.type = "classic", habillage = "quali")
+```
+
+The resulting plot from including all the 35 variables (age not included) is a bit cluttered so let's focus on the following variables and plot them similarly: 'sex', 'SPC', 'frequency', 'sugar' and 'How'.
+
+```{r}
+# Perform MCA on the selected variables
+mca2 <- MCA(tea[c(14, 15, 19, 20, 23)], graph = FALSE)
+
+# Visualize the results
+plot(mca2, invisible=c("ind"), graph.type = "classic", habillage = "quali")
+```
+
+Several correlations can be identified in this plot: sex of the individual seem to be most correlated with Dim 1 while the others seem to be more scattered around the plot. The variables that are on the left side of the plot are therefore more correlated to females and the variables on the right side are correlated to male tea drinkers. Based on that assumption women that answered the tea questionnaire are more often students or non-workers where men are workers or seniors. Women tend to drink more tea than men and have something other than milk or lemon with their tea. Women also have tendency to have their tea with no sugar.
