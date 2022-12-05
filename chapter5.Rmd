@@ -99,7 +99,7 @@ str(tea)
 View(tea)
 
 # Drop 'age' out since there is already factorized age groups in the data
-tea <- select(tea, -age)
+tea <- dplyr::select(tea, -age)
 
 # Plot all the data in 'tea' in groups of 6.
 pivot_longer(tea[1:6], cols = everything()) %>% 
