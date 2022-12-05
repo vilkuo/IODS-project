@@ -1,0 +1,35 @@
+# Week 5 - Dimensionality reduction techniques
+
+**
+
+
+## Analysis
+
+```{r, message=FALSE}
+# Load the necessary libraries
+library(dplyr)
+library(corrplot)
+```
+
+
+### Read the data
+
+#### Read the data into a variable and explore the contents
+
+```{r}
+# Read the data from local .csv file and include the row names
+human <- read.csv("data/human.csv", sep = ",", row.names = 1, header = TRUE)
+
+# Print the overview of the data
+str(human)
+head(human)
+summary(human)
+```
+
+The values of the variables are either numeric or integers. Each row represents the values of a certain country related to human development. The average values for 'Edu_FM' and 'Labo_FM' are under 1.0 meaning that on average, females are less represented in labor force and with secondary education. The maternal mortality rates are vastly different in certain countries illustrated by the over 1000-fold difference between the minimum and the maximum value. Males are much more present as representatives in parliament on average. The maximum percentage of females in parliament is only slightly over 50% while the minimum is 0%.
+
+```{r}
+# 
+cor <- cor
+
+```
