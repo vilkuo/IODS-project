@@ -96,7 +96,7 @@ tea <- read.csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open
 
 # Explore the data
 str(tea)
-View(tea)
+#View(tea)
 
 # Drop 'age' out since there is already factorized age groups in the data
 tea <- dplyr::select(tea, -age)
