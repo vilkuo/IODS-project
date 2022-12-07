@@ -4,7 +4,7 @@
 
 ```{r, message=FALSE}
 # Load the necessary libraries
-library()
+#library()
 ```
 
 
@@ -17,7 +17,7 @@ library()
 
 
 # Print the overview of the data
-str()
-head()
-summary()
+#str()
+#head()
+#summary()
 ```
