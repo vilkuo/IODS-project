@@ -1,0 +1,23 @@
+# Week 6 - Analysis of longitudinal data
+
+## Analysis
+
+```{r, message=FALSE}
+# Load the necessary libraries
+library()
+```
+
+
+### Read the data
+
+#### Read the data into a variable and explore the contents
+
+```{r}
+# Read the data from local .csv file and include the row names
+
+
+# Print the overview of the data
+str()
+head()
+summary()
+```
