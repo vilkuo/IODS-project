@@ -80,7 +80,7 @@ Tracking phenomenom can be seen in this data set in both plots above. The rats w
 
 #### Summary graph of weight development
 
-```{r}
+```{r, message=FALSE}
 # Summary data with mean and standard error of Weight by Group and Time 
 RATSS <- RATS %>%
   group_by(Group, Time) %>%
