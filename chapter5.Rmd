@@ -44,7 +44,7 @@ Maternal mortality ratio seems to be heavily negatively correlated with life exp
 
 #### PCA on the raw data
 
-```{r}
+```{r, warning=FALSE, fig.width=7, fig.height=7}
 # Perform the PCA
 pca_human_raw <- prcomp(human)
 
@@ -59,7 +59,7 @@ On non-standardized data, the PCA doesn't seem to capture the variance at all sh
 
 #### Standardized data
 
-```{r}
+```{r, fig.width=7, fig.height=7}
 # Standardize the data
 human_std <- scale(human)
 
