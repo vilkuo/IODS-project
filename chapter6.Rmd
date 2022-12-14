@@ -54,7 +54,7 @@ RATS <- dplyr::select(RATS, -WD)
 
 #### Individual rat weight development
 
-```{r}
+```{r, fig.width=8, fig.height=6}
 # Draw the plot on unstandardized data
 ggplot(RATS, aes(x = Time, y = Weight, linetype = ID, col = ID)) +
   geom_line() +
@@ -62,7 +62,7 @@ ggplot(RATS, aes(x = Time, y = Weight, linetype = ID, col = ID)) +
   facet_grid(. ~ Group, labeller = label_both)
 ```
 
-```{r}
+```{r, fig.width=8, fig.height=6}
 # Add standardized weight variable to the data
 RATS <- RATS %>% 
   group_by(Time) %>% 
